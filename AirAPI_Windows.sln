@@ -5,6 +5,11 @@ VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AirAPI_Windows", "AirAPI_Windows.vcxproj", "{0A770089-877A-4053-957D-2F56EA425766}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CameraTest", "examples\CameraTest.vcxproj", "{B8F1E3A0-1234-5678-9ABC-DEF012345678}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0A770089-877A-4053-957D-2F56EA425766} = {0A770089-877A-4053-957D-2F56EA425766}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +26,12 @@ Global
 		{0A770089-877A-4053-957D-2F56EA425766}.Release|x64.Build.0 = Release|x64
 		{0A770089-877A-4053-957D-2F56EA425766}.Release|x86.ActiveCfg = Release|Win32
 		{0A770089-877A-4053-957D-2F56EA425766}.Release|x86.Build.0 = Release|Win32
+		{B8F1E3A0-1234-5678-9ABC-DEF012345678}.Debug|x64.ActiveCfg = Debug|x64
+		{B8F1E3A0-1234-5678-9ABC-DEF012345678}.Debug|x64.Build.0 = Debug|x64
+		{B8F1E3A0-1234-5678-9ABC-DEF012345678}.Debug|x86.ActiveCfg = Debug|x64
+		{B8F1E3A0-1234-5678-9ABC-DEF012345678}.Release|x64.ActiveCfg = Release|x64
+		{B8F1E3A0-1234-5678-9ABC-DEF012345678}.Release|x64.Build.0 = Release|x64
+		{B8F1E3A0-1234-5678-9ABC-DEF012345678}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

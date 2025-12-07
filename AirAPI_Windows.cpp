@@ -414,6 +414,10 @@ int StartConnection()
 		std::cout << "Opening Device" << std::endl;
 		// open devices
 		struct hid_device_info* devs = open_device();
+		if (devs == NULL) {
+			std::cout << "No XReal device found" << std::endl;
+			return 0;
+		}
 		if (devs->product_id == AIR_2_ULTRA_PID) {
 			device  = open_device_by_interface(devs, 2); // for interface 3
 			device4 = open_device_by_interface(devs, 8); // for interface 4
@@ -426,7 +430,7 @@ int StartConnection()
 		hid_free_enumeration(devs);
 		if (!device || !device4) {
 			std::cout << "Unable to open device" << std::endl;
-			return 1;
+			return 0;
 		}
 
 

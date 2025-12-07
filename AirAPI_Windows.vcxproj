@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -70,6 +70,32 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <!-- ONNX Runtime configuration - check local deps folder first, then environment variable -->
+  <PropertyGroup>
+    <!-- Local deps folder path -->
+    <OnnxRuntimeLocalDir>$(ProjectDir)deps\onnxruntime\onnxruntime-win-x64-1.19.2</OnnxRuntimeLocalDir>
+    <!-- Check if local ONNX Runtime exists -->
+    <HasLocalOnnxRuntime Condition="Exists('$(OnnxRuntimeLocalDir)\include\onnxruntime_cxx_api.h')">true</HasLocalOnnxRuntime>
+    <HasLocalOnnxRuntime Condition="!Exists('$(OnnxRuntimeLocalDir)\include\onnxruntime_cxx_api.h')">false</HasLocalOnnxRuntime>
+    <!-- Check environment variable as fallback -->
+    <HasEnvOnnxRuntime Condition="'$(ONNXRUNTIME_DIR)' != ''">true</HasEnvOnnxRuntime>
+    <HasEnvOnnxRuntime Condition="'$(ONNXRUNTIME_DIR)' == ''">false</HasEnvOnnxRuntime>
+    <!-- Use local if available, otherwise env variable -->
+    <HasOnnxRuntime Condition="'$(HasLocalOnnxRuntime)' == 'true' Or '$(HasEnvOnnxRuntime)' == 'true'">true</HasOnnxRuntime>
+    <HasOnnxRuntime Condition="'$(HasLocalOnnxRuntime)' != 'true' And '$(HasEnvOnnxRuntime)' != 'true'">false</HasOnnxRuntime>
+    <!-- Resolve actual path -->
+    <OnnxRuntimeDir Condition="'$(HasLocalOnnxRuntime)' == 'true'">$(OnnxRuntimeLocalDir)</OnnxRuntimeDir>
+    <OnnxRuntimeDir Condition="'$(HasLocalOnnxRuntime)' != 'true' And '$(HasEnvOnnxRuntime)' == 'true'">$(ONNXRUNTIME_DIR)</OnnxRuntimeDir>
+    <!-- Configure preprocessor and linker -->
+    <OnnxRuntimeDefine Condition="'$(HasOnnxRuntime)' == 'true'">ONNXRUNTIME_AVAILABLE;</OnnxRuntimeDefine>
+    <OnnxRuntimeDefine Condition="'$(HasOnnxRuntime)' != 'true'"></OnnxRuntimeDefine>
+    <OnnxRuntimeInclude Condition="'$(HasOnnxRuntime)' == 'true'">$(OnnxRuntimeDir)\include;</OnnxRuntimeInclude>
+    <OnnxRuntimeInclude Condition="'$(HasOnnxRuntime)' != 'true'"></OnnxRuntimeInclude>
+    <OnnxRuntimeLibDir Condition="'$(HasOnnxRuntime)' == 'true'">$(OnnxRuntimeDir)\lib;</OnnxRuntimeLibDir>
+    <OnnxRuntimeLibDir Condition="'$(HasOnnxRuntime)' != 'true'"></OnnxRuntimeLibDir>
+    <OnnxRuntimeLib Condition="'$(HasOnnxRuntime)' == 'true'">onnxruntime.lib;</OnnxRuntimeLib>
+    <OnnxRuntimeLib Condition="'$(HasOnnxRuntime)' != 'true'"></OnnxRuntimeLib>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -111,18 +137,19 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;AIRAPIWINDOWS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(OnnxRuntimeDefine)_DEBUG;AIRAPIWINDOWS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;$(OnnxRuntimeInclude)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(ProjectDir)\deps\hidapi-win\x64;$(ProjectDir)\deps\Fusion\Fusion\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Fusion.lib;hidapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\deps\hidapi-win\x64;$(ProjectDir)\deps\Fusion\Fusion\Release;$(OPENCV_DIR)\x64\vc16\lib;$(OnnxRuntimeLibDir)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Fusion.lib;hidapi.lib;opencv_world4120d.lib;$(OnnxRuntimeLib)%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,11 +158,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;AIRAPIWINDOWS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(OnnxRuntimeDefine)NDEBUG;AIRAPIWINDOWS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;$(OnnxRuntimeInclude)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -143,18 +171,27 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>Fusion.lib;hidapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)\deps\hidapi-win\x64;$(ProjectDir)\deps\Fusion\Fusion\Release;%(AdditionalLibraryDirectories):$(ProjectDir)\deps\hidapi-win\x64;$(ProjectDir)\deps\Fusion\Fusion\out\build\x64-Debug\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Fusion.lib;hidapi.lib;opencv_world4120.lib;$(OnnxRuntimeLib)%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\deps\hidapi-win\x64;$(ProjectDir)\deps\Fusion\Fusion\Release;$(OPENCV_DIR)\x64\vc16\lib;$(OnnxRuntimeLibDir)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AirAPI_Windows.h" />
+    <ClInclude Include="DepthEstimator.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="XRealCamera.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AirAPI_Windows.cpp" />
+    <ClCompile Include="DepthEstimator.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="XRealCamera.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
